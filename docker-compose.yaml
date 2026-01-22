@@ -1,0 +1,203 @@
+# Docker Compose for LLM Mail Description Service
+# Usage: docker compose up -d
+
+services:
+  # Model download and conversion (runs once)
+  model-init:
+    build:
+      context: .
+      dockerfile: docker/model-init/Dockerfile
+    volumes:
+      - models:/models
+      - ./config:/config:ro
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+      - CONFIG_PATH=/config
+      - MODELS_PATH=/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # Triton Inference Server - GPU 0
+  triton-gpu-0:
+    image: nvcr.io/nvidia/tritonserver:25.12-trtllm-python-py3
+    depends_on:
+      model-init:
+        condition: service_completed_successfully
+    volumes:
+      - models:/models:ro
+      - ./config:/config:ro
+    ports:
+      - "8001:8001"  # gRPC
+      - "8002:8002"  # Metrics
+    command: >
+      tritonserver
+      --model-repository=/models/model_repository
+      --http-port=8000
+      --grpc-port=8001
+      --metrics-port=8002
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v2/health/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Triton Inference Server - GPU 1
+  triton-gpu-1:
+    image: nvcr.io/nvidia/tritonserver:25.12-trtllm-python-py3
+    depends_on:
+      model-init:
+        condition: service_completed_successfully
+    volumes:
+      - models:/models:ro
+      - ./config:/config:ro
+    ports:
+      - "8011:8001"  # gRPC
+      - "8012:8002"  # Metrics
+    command: >
+      tritonserver
+      --model-repository=/models/model_repository
+      --http-port=8000
+      --grpc-port=8001
+      --metrics-port=8002
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["1"]
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v2/health/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # FastAPI Application
+  api:
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+    depends_on:
+      triton-gpu-0:
+        condition: service_healthy
+      triton-gpu-1:
+        condition: service_healthy
+    volumes:
+      - ./config:/config:ro
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - CONFIG_PATH=/config
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Upload checkpoint to Hugging Face (manual run)
+  model-upload:
+    build:
+      context: .
+      dockerfile: docker/model-init/Dockerfile
+    volumes:
+      - models:/models:ro
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+      - HF_REPO_ID=${HF_REPO_ID}
+    entrypoint: ["python", "-c"]
+    command:
+      - |
+        import os
+        import sys
+        import tempfile
+        from pathlib import Path
+        from huggingface_hub import HfApi, create_repo
+
+        repo_id = os.environ.get("HF_REPO_ID")
+        if not repo_id:
+            print("Error: HF_REPO_ID environment variable required")
+            print("Usage: HF_REPO_ID=username/Qwen3-8B-NVFP4 docker compose run --rm model-upload")
+            sys.exit(1)
+
+        checkpoint_dir = Path("/models/checkpoint_nvfp4")
+        if not checkpoint_dir.exists():
+            print(f"Error: Checkpoint not found at {checkpoint_dir}")
+            print("Run model-init first: docker compose run --rm model-init")
+            sys.exit(1)
+
+        # Model card (dedented)
+        model_card = f'''---
+        license: apache-2.0
+        base_model: Qwen/Qwen3-8B
+        tags: [tensorrt, tensorrt-llm, nvfp4, blackwell, quantized]
+        library_name: tensorrt-llm
+        pipeline_tag: text-generation
+        ---
+
+        # Qwen3-8B-NVFP4
+
+        NVFP4 quantized Qwen3-8B for NVIDIA Blackwell GPUs (RTX 5090, RTX PRO 4000).
+
+        ## Details
+        - Format: NVFP4 (4-bit FP) + FP8 KV cache
+        - Tools: TensorRT-LLM 1.2.0, ModelOpt 0.37.0
+        - Calibration: 512 samples, cnn_dailymail
+
+        ## Usage
+        ```bash
+        huggingface-cli download {repo_id} --local-dir ./checkpoint
+        trtllm-build --checkpoint_dir ./checkpoint --output_dir ./engine --gemm_plugin nvfp4
+        ```
+        '''
+        import textwrap
+        model_card = textwrap.dedent(model_card).strip()
+
+        print(f"Uploading to: {repo_id}")
+        api = HfApi()
+        create_repo(repo_id, exist_ok=True)
+
+        # Upload checkpoint folder
+        print("Uploading checkpoint files...")
+        api.upload_folder(
+            folder_path=str(checkpoint_dir),
+            repo_id=repo_id,
+            commit_message="Upload NVFP4 quantized checkpoint",
+        )
+
+        # Upload README separately (to temp file since volume is read-only)
+        print("Uploading model card...")
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+            f.write(model_card)
+            temp_readme = f.name
+        api.upload_file(
+            path_or_fileobj=temp_readme,
+            path_in_repo="README.md",
+            repo_id=repo_id,
+            commit_message="Add model card",
+        )
+        os.unlink(temp_readme)
+
+        print(f"Done! https://huggingface.co/{repo_id}")
+    profiles:
+      - upload
+
+volumes:
+  models:
+    name: llm-mail-description-models

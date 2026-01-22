@@ -1,0 +1,29 @@
+# Development Docker Compose - without GPU/Triton
+# Usage: docker compose -f docker-compose.dev.yaml up -d
+
+services:
+  # FastAPI Application (mock inference mode)
+  api:
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+    volumes:
+      - ./config:/config:ro
+      - ./src:/app/src:ro  # Hot reload
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+      - CONFIG_PATH=/config
+    command: >
+      python -m uvicorn src.api.app:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s

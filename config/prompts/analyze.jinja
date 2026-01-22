@@ -1,0 +1,39 @@
+/no_think
+Analyze the email and return a JSON object with the following fields:
+
+SHORT_SUMMARY: One sentence (max 100 chars) summarizing the email's purpose. Like a subject line.
+
+DETAILED_SUMMARY: 2-4 sentences (max 500 chars) capturing key points for search/RAG.
+
+KEYWORDS: 3-10 single words or short phrases for indexing. Focus on: names, companies, products, actions, topics.
+
+CATEGORIES: One or more from the list below. Choose all that apply.
+
+TONE: Exactly one from: {{ tones | join(", ") }}
+
+DETECTED_LANGUAGE: ISO 639-1 code of the original email (e.g., "en", "cs", "de").
+
+All text output must be in {{ output_language | upper }}.
+
+=== CATEGORIES ===
+{% for group_name, group_values in category_groups.items() %}
+{{ group_name }}: {{ group_values | join(", ") }}
+{% endfor %}
+=== EMAIL ===
+
+{{ email_content }}
+
+=== EXAMPLE OUTPUT ===
+
+{
+  "short_summary": "Invoice #12345 for consulting services in January",
+  "detailed_summary": "Acme Corp sent an invoice for $5,000 covering consulting services provided in January 2024. Payment is due within 30 days. The invoice includes a detailed breakdown of hours worked.",
+  "keywords": ["invoice", "Acme Corp", "consulting", "payment", "January"],
+  "categories": ["invoice"],
+  "tone": "formal",
+  "detected_language": "en"
+}
+
+=== YOUR RESPONSE ===
+
+Return only valid JSON, no other text.

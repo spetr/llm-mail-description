@@ -1,0 +1,30 @@
+# Application configuration
+# See docs/configuration.md for details
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 1
+
+batching:
+  # Maximum emails per batch
+  max_batch_size: 16
+  # Maximum wait time before processing partial batch (ms)
+  max_wait_ms: 50
+
+inference:
+  backend: "triton"
+  triton_urls:
+    - "triton-gpu-0:8001"
+    - "triton-gpu-1:8001"
+  model_name: "Qwen3"
+  timeout_seconds: 30.0
+
+model:
+  hf_repo: "Qwen/Qwen3-8B"
+  max_input_tokens: 4096
+  max_output_tokens: 512
+
+output:
+  # Output language for summaries and keywords
+  language: "en"

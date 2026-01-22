@@ -1,0 +1,126 @@
+# https://taskfile.dev
+version: "3"
+
+vars:
+  DOCKER_COMPOSE: docker compose
+  DOCKER_COMPOSE_DEV: docker compose -f docker-compose.dev.yaml
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  # === Installation ===
+
+  install:
+    desc: Install production dependencies
+    cmds:
+      - pip install .
+
+  dev:
+    desc: Install development dependencies
+    cmds:
+      - pip install -e ".[dev]"
+
+  # === Docker operations ===
+
+  up:
+    desc: Start all services (production)
+    cmds:
+      - "{{.DOCKER_COMPOSE}} up -d"
+
+  up:dev:
+    desc: Start API in development mode (no GPU)
+    cmds:
+      - "{{.DOCKER_COMPOSE_DEV}} up -d"
+
+  down:
+    desc: Stop all services
+    cmds:
+      - "{{.DOCKER_COMPOSE}} down"
+      - "{{.DOCKER_COMPOSE_DEV}} down"
+
+  logs:
+    desc: Show API service logs
+    cmds:
+      - "{{.DOCKER_COMPOSE}} logs -f api"
+
+  logs:triton:
+    desc: Show Triton service logs
+    cmds:
+      - "{{.DOCKER_COMPOSE}} logs -f triton-gpu-0 triton-gpu-1"
+
+  build:
+    desc: Build Docker images
+    cmds:
+      - "{{.DOCKER_COMPOSE}} build"
+
+  init-model:
+    desc: Download and convert model
+    cmds:
+      - "{{.DOCKER_COMPOSE}} run --rm model-init"
+
+  upload-model:
+    desc: Upload NVFP4 checkpoint to Hugging Face
+    dotenv: ['.env']
+    cmds:
+      - "{{.DOCKER_COMPOSE}} run --rm model-upload"
+
+  # === Development ===
+
+  test:
+    desc: Run tests
+    cmds:
+      - pytest tests/ -v
+
+  test:cov:
+    desc: Run tests with coverage
+    cmds:
+      - pytest tests/ -v --cov=src --cov-report=html
+
+  lint:
+    desc: Run linter
+    cmds:
+      - ruff check src/ tests/
+
+  format:
+    desc: Format code
+    cmds:
+      - ruff format src/ tests/
+      - ruff check --fix src/ tests/
+
+  typecheck:
+    desc: Run type checker
+    cmds:
+      - mypy src/
+
+  run:
+    desc: Run locally (without Docker)
+    cmds:
+      - python -m src
+
+  # === Cleanup ===
+
+  clean:
+    desc: Remove build artifacts
+    cmds:
+      - rm -rf __pycache__ .pytest_cache .mypy_cache .ruff_cache
+      - rm -rf htmlcov .coverage
+      - rm -rf dist build *.egg-info
+      - find . -type d -name "__pycache__" -exec rm -rf {} +
+
+  # === Composite tasks ===
+
+  check:
+    desc: Run all checks (lint, typecheck, test)
+    cmds:
+      - task: lint
+      - task: typecheck
+      - task: test
+
+  ci:
+    desc: Run CI pipeline
+    cmds:
+      - task: install
+      - task: check

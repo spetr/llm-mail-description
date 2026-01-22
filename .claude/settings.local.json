@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "Bash(task build)",
+      "Bash(docker compose build:*)",
+      "Bash(docker volume rm:*)",
+      "Bash(docker compose run:*)",
+      "Bash(docker run:*)"
+    ]
+  }
+}

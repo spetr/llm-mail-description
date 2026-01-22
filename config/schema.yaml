@@ -1,0 +1,160 @@
+# Output JSON schema definition
+# Loaded at application startup
+# See docs/configuration.md for details
+
+output:
+  language: "en"
+
+fields:
+  # Short one-sentence summary (like a new subject line)
+  short_summary:
+    type: string
+    max_length: 100
+    description: "One sentence summary, like email subject"
+
+  # Longer summary for embedding and RAG
+  detailed_summary:
+    type: string
+    max_length: 500
+    description: "2-4 sentences for embedding/RAG"
+
+  # Keywords for search
+  keywords:
+    type: array
+    item_type: string
+    min_items: 3
+    max_items: 10
+    description: "Keywords for search and indexing"
+
+  # Categories (multi-label) - grouped for better prompt organization
+  categories:
+    type: array
+    item_type: enum
+    min_items: 1
+    description: "Email categories (can have multiple)"
+    groups:
+      financial:
+        - invoice
+        - payment_request
+        - payment_confirmation
+        - refund
+        - expense_report
+        - budget
+        - financial_statement
+        - tax
+        - pricing
+        - quote
+      sales:
+        - order_confirmation
+        - order_status
+        - order_cancellation
+        - shipping_notification
+        - delivery_confirmation
+        - return_request
+        - exchange
+        - sales_inquiry
+        - upsell
+        - renewal
+      support:
+        - complaint
+        - feedback
+        - review_request
+        - satisfaction_survey
+        - support_request
+        - support_response
+        - bug_report
+        - feature_request
+        - service_outage
+        - maintenance_notice
+      business:
+        - meeting_invitation
+        - meeting_update
+        - meeting_cancellation
+        - meeting_minutes
+        - agenda
+        - project_update
+        - status_report
+        - progress_report
+        - proposal
+        - contract
+      hr:
+        - job_application
+        - interview_invitation
+        - offer_letter
+        - onboarding
+        - policy_update
+        - leave_request
+        - performance_review
+        - training
+        - resignation
+        - termination
+      legal:
+        - legal_notice
+        - terms_update
+        - privacy_update
+        - compliance
+        - audit
+        - nda
+        - agreement
+        - dispute
+      marketing:
+        - newsletter
+        - promotion
+        - announcement
+        - product_launch
+        - event_invitation
+        - webinar
+        - press_release
+        - partnership
+      internal:
+        - internal_memo
+        - team_update
+        - company_announcement
+        - policy_change
+        - it_notification
+        - security_alert
+        - system_notification
+        - reminder
+      personal:
+        - personal
+        - introduction
+        - networking
+        - thank_you
+        - congratulations
+        - condolences
+        - invitation
+        - rsvp
+      automated:
+        - auto_reply
+        - out_of_office
+        - bounce_notification
+        - subscription_confirmation
+        - password_reset
+        - account_verification
+        - alert
+        - digest
+      unwanted:
+        - spam
+        - phishing
+        - scam
+        - unsolicited
+
+  # Tone/sentiment
+  tone:
+    type: enum
+    description: "Overall tone of the email"
+    enum_values:
+      - formal
+      - informal
+      - friendly
+      - angry
+      - neutral
+      - urgent
+      - sarcastic
+      - apologetic
+      - demanding
+
+  # Detected language
+  detected_language:
+    type: string
+    description: "ISO 639-1 code of the original email language"
