@@ -77,7 +77,7 @@ def create_app() -> FastAPI:
     settings = get_settings()
 
     app = FastAPI(
-        title="LLM Mail Description",
+        title="MailBrain",
         description="Email analysis service using local LLM with constrained JSON output",
         version="0.1.0",
         lifespan=lifespan,

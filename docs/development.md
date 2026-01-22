@@ -5,7 +5,7 @@
 ```bash
 # Clone repository
 git clone <repo>
-cd llm-mail-description
+cd mailbrain
 
 # Create virtual environment
 python -m venv .venv

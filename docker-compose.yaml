@@ -1,4 +1,4 @@
-# Docker Compose for LLM Mail Description Service
+# Docker Compose for MailBrain Service
 # Usage: docker compose up -d
 
 services:
@@ -200,4 +200,4 @@ services:
 
 volumes:
   models:
-    name: llm-mail-description-models
+    name: mailbrain-models

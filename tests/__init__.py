@@ -1,1 +1,1 @@
-"""Tests for LLM Mail Description service."""
+"""Tests for MailBrain service."""

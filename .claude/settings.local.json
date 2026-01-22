@@ -6,7 +6,11 @@
       "Bash(docker compose build:*)",
       "Bash(docker volume rm:*)",
       "Bash(docker compose run:*)",
-      "Bash(docker run:*)"
+      "Bash(docker run:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nInitial commit: LLM Mail Description Service\n\nEmail analysis API using Qwen3-8B with NVFP4 quantization for Blackwell GPUs.\n\nFeatures:\n- FastAPI-based REST API for email analysis\n- TensorRT-LLM inference with Triton Server\n- NVFP4 quantization optimized for RTX PRO 4000 / RTX 5090\n- Configurable JSON output schema\n- Multi-GPU support with load balancing\n- Docker Compose deployment\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

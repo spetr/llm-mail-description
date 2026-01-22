@@ -2,7 +2,7 @@
 
 ## Overview
 
-LLM Mail Description is a service for analyzing emails using a local LLM with constrained JSON output (structured generation).
+MailBrain is a service for analyzing emails using a local LLM with constrained JSON output (structured generation).
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐

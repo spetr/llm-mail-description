@@ -13,7 +13,7 @@
 ```bash
 # 1. Clone and configure
 git clone <repo>
-cd llm-mail-description
+cd mailbrain
 cp .env.example .env
 
 # 2. Set Hugging Face token (for Llama)

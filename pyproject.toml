@@ -1,5 +1,5 @@
 [project]
-name = "llm-mail-description"
+name = "mailbrain"
 version = "0.1.0"
 description = "Email analysis service using local LLM with constrained JSON output"
 readme = "README.md"

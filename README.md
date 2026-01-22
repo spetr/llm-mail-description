@@ -1,4 +1,4 @@
-# LLM Mail Description
+# MailBrain
 
 Email analysis service using local LLM with constrained JSON output.
 

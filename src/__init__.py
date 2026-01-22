@@ -1,1 +1,1 @@
-"""LLM Mail Description - Email analysis service."""
+"""MailBrain - Email analysis service."""

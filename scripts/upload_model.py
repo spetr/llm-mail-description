@@ -27,7 +27,7 @@ except ImportError:
 
 # Default paths (can be overridden)
 DEFAULT_CHECKPOINT_DIR = Path("/models/checkpoint_nvfp4")
-DEFAULT_MODELS_VOLUME = "llm-mail-description-models"
+DEFAULT_MODELS_VOLUME = "mailbrain-models"
 
 MODEL_CARD_TEMPLATE = """---
 license: apache-2.0
